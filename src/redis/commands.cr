@@ -143,8 +143,8 @@ class Redis
     # ```
     # redis.del(["some", "keys", "to", "delete"])
     # ```
-    def del(keys : Array)
-      integer_command(concat(["DEL"], keys))
+    def del(keys : Array(String))
+      integer_command(["DEL"] + keys)
     end
 
     # Returns or stores the elements contained in the list, set or sorted set at key.
@@ -217,11 +217,11 @@ class Redis
     # redis.mget("foo1", "foo2") # => ["test1", "test2"]
     # ```
     def mget(*keys)
-      string_array_command(concat(["MGET"], keys))
+      mget keys.to_a
     end
 
     def mget(keys : Array(String)) : Array(RedisValue)
-      string_array_command(concat(["MGET"], keys))
+      string_array_command(["MGET"] + keys)
     end
 
     # Sets the given keys to their respective values as defined in the hash.
@@ -438,7 +438,7 @@ class Redis
     # redis.bitop("and", "dest", "key1", "key2")
     # ```
     def bitop(operation, key, keys : Array(String)) : Int64
-      integer_command(concat(["BITOP", operation.to_s, key.to_s], keys))
+      integer_command(["BITOP", operation.to_s, key.to_s] + keys)
     end
 
     # :ditto:
@@ -569,7 +569,7 @@ class Redis
     # redis.rpush("mylist", "1", "2", "3")
     # ```
     def rpush(key, values : Array(RedisValue))
-      integer_command(concat(["RPUSH", key.to_s], values))
+      integer_command(["RPUSH", key.to_s] + values)
     end
 
     # :ditto:
@@ -586,7 +586,7 @@ class Redis
 
     # :ditto:
     def lpush(key, values : Array(RedisValue))
-      integer_command(concat(["LPUSH", key.to_s], values))
+      integer_command(["LPUSH", key.to_s] + values)
     end
 
     # Inserts value at the head of the list stored at key, only if key already exists and holds a list.
@@ -696,7 +696,7 @@ class Redis
     end
 
     def sadd(key, values : Array(RedisValue))
-      integer_command(concat(["SADD", key.to_s], values))
+      integer_command(["SADD", key.to_s] + values)
     end
 
     # Returns all the members of the set value stored at key.
@@ -729,7 +729,7 @@ class Redis
     end
 
     def srem(key, values : Array(RedisValue))
-      integer_command(concat(["SREM", key.to_s], values))
+      integer_command(["SREM", key.to_s] + values)
     end
 
     # Returns the set cardinality (number of elements) of the set stored at key.
@@ -741,7 +741,7 @@ class Redis
     #
     # **Return value**: Array(String), a list with members of the resulting set.
     def sdiff(keys : Array(String)) : Array(RedisValue)
-      string_array_command(concat(["SDIFF"], keys))
+      string_array_command(["SDIFF"] + keys)
     end
 
     def sdiff(*keys : String) : Array(RedisValue)
@@ -752,7 +752,7 @@ class Redis
     #
     # **Return value**: Integer, the number of elements in the resulting set.
     def sdiffstore(destination, keys : Array(String)) : Int64
-      integer_command(concat(["SDIFFSTORE", destination.to_s], keys))
+      integer_command(["SDIFFSTORE", destination.to_s] + keys)
     end
 
     # :ditto:
@@ -764,7 +764,7 @@ class Redis
     #
     # **Return value**: Array(String), an array with members of the resulting set.
     def sinter(keys : Array(String)) : Array(RedisValue)
-      string_array_command(concat(["SINTER"], keys))
+      string_array_command(["SINTER"] + keys)
     end
 
     # :ditto:
@@ -782,7 +782,7 @@ class Redis
     # redis.sinterstore("destination", "key1", "key2")
     # ```
     def sinterstore(destination_key, keys : Array(String)) : Int64
-      integer_command(concat(["SINTERSTORE", destination_key.to_s], keys))
+      integer_command(["SINTERSTORE", destination_key.to_s] + keys)
     end
 
     # :ditto:
@@ -857,7 +857,7 @@ class Redis
     #
     # **Return value**: Array(String), with members of the resulting set.
     def sunion(keys : Array(String))
-      string_array_command(concat(["SUNION"], keys))
+      string_array_command(["SUNION"] + keys)
     end
 
     # :ditto:
@@ -869,7 +869,7 @@ class Redis
     #
     # **Return value**: Integer, the number of elements in the resulting set.
     def sunionstore(destination, keys : Array(String)) : Int64
-      integer_command(concat(["SUNIONSTORE", destination.to_s], keys))
+      integer_command(["SUNIONSTORE", destination.to_s] + keys)
     end
 
     # :ditto:
@@ -895,7 +895,7 @@ class Redis
     # redis.blpop(["myotherlist", "mylist"], 1) # => ["mylist", "hello"]
     # ```
     def blpop(keys, timeout_in_seconds)
-      q = concat(["BLPOP"], keys)
+      q = ["BLPOP"] + keys
       q << timeout_in_seconds.to_s
       array_or_nil_command(q)
     end
@@ -919,7 +919,7 @@ class Redis
     # redis.brpop(["myotherlist", "mylist"], 1) # => ["mylist", "world"]
     # ```
     def brpop(keys, timeout_in_seconds)
-      q = concat(["BRPOP"], keys)
+      q = ["BRPOP"] + keys
       q << timeout_in_seconds.to_s
       array_or_nil_command(q)
     end
@@ -1049,7 +1049,7 @@ class Redis
     #
     # **Return value**: Array(RedisValue), the list of values associated with the given fields, in the same order as they are requested.
     def hmget(key, fields : Array(String)) : Array(RedisValue)
-      string_array_command(concat(["HMGET", key.to_s], fields))
+      string_array_command(["HMGET", key.to_s] + fields)
     end
 
     # :ditto:
@@ -1114,11 +1114,7 @@ class Redis
     # redis.zadd("myzset", 2, "two", 3, "three")
     # ```
     def zadd(key, *scores_and_members)
-      if scores_and_members.size % 2 > 0
-        raise Error.new("zadd expects an array of scores mapped to members")
-      end
-
-      integer_command(concat(["ZADD", key.to_s], scores_and_members))
+      zadd key, scores_and_members.to_a
     end
 
     def zadd(key, scores_and_members : Array(RedisValue))
@@ -1126,7 +1122,7 @@ class Redis
         raise Error.new("zadd expects an array of scores mapped to members")
       end
 
-      integer_command(concat(["ZADD", key.to_s], scores_and_members))
+      integer_command(["ZADD", key.to_s] + scores_and_members.map &.to_s)
     end
 
     # Returns the specified range of elements in the sorted set stored at key.
@@ -1228,10 +1224,10 @@ class Redis
     # ```
     def zinterstore(destination, keys : Array, weights = nil, aggregate = nil)
       numkeys = keys.size
-      q = concat(["ZINTERSTORE", destination.to_s, numkeys.to_s], keys)
+      q = ["ZINTERSTORE", destination.to_s, numkeys.to_s] + keys.map &.to_s
       if weights
         q << "WEIGHTS"
-        concat(q, weights)
+        q += weights.map &.to_s
       end
       if aggregate
         q << "AGGREGATE" << aggregate.to_s
@@ -1249,10 +1245,10 @@ class Redis
     # **Return value**: Integer, the number of elements in the resulting sorted set at destination.
     def zunionstore(destination, keys : Array, weights = nil, aggregate = nil)
       numkeys = keys.size
-      q = concat(["ZUNIONSTORE", destination.to_s, numkeys.to_s], keys)
+      q = ["ZUNIONSTORE", destination.to_s, numkeys.to_s] + keys.map &.to_s
       if weights
         q << "WEIGHTS"
-        concat(q, weights)
+        q += weights.map &.to_s
       end
       if aggregate
         q << "AGGREGATE" << aggregate.to_s
@@ -1409,7 +1405,7 @@ class Redis
     # redis.pfadd("hll", "a", "b", "c", "d", "e", "f", "g") # => 1
     # ```
     def pfadd(key, values : Array(String)) : Int64
-      integer_command(concat(["PFADD", key.to_s], values))
+      integer_command(["PFADD", key.to_s] + values)
     end
 
     # :ditto:
@@ -1421,7 +1417,7 @@ class Redis
     # approximate the cardinality of the union of the observed Sets of the
     # source HyperLogLog structures.
     def pfmerge(keys : Array(String))
-      string_command(concat(["PFMERGE"], keys))
+      string_command(["PFMERGE"] + keys)
     end
 
     # :ditto:
@@ -1436,7 +1432,7 @@ class Redis
     # **Return value**: Integer, the approximated number of unique elements
     # observed via PFADD.
     def pfcount(keys : Array(String)) : Int64
-      integer_command(concat(["PFCOUNT"], keys))
+      integer_command(["PFCOUNT"] + keys)
     end
 
     # :ditto:
@@ -1455,7 +1451,7 @@ class Redis
     # redis.eval("return {KEYS[1],KEYS[2],ARGV[1],ARGV[2]}", ["key1", "key2"], ["first art", "second arg"])
     # ```
     def eval(script : String, keys = [] of RedisValue, args = [] of RedisValue)
-      string_array_command(concat(["EVAL", script, keys.size.to_s], keys, args))
+      string_array_command(["EVAL", script, keys.size.to_s] + keys + args)
     end
 
     # EVAL and EVALSHA are used to evaluate scripts using the Lua interpreter
@@ -1463,7 +1459,7 @@ class Redis
     #
     # **Return value**: Array(String), depends on the executed script
     def evalsha(sha1, keys = [] of RedisValue, args = [] of RedisValue)
-      string_array_command(concat(["EVALSHA", sha1.to_s, keys.size.to_s], keys, args))
+      string_array_command(["EVALSHA", sha1.to_s, keys.size.to_s] + keys + args)
     end
 
     # Load a script into the scripts cache, without executing it.
@@ -1495,7 +1491,7 @@ class Redis
     # For every corresponding SHA1 digest of a script that actually exists
     # in the script cache, an 1 is returned, otherwise 0 is returned.
     def script_exists(sha1_array : Array(Reference))
-      integer_array_command(concat(["SCRIPT", "EXISTS"], sha1_array))
+      integer_array_command(["SCRIPT", "EXISTS"] + sha1_array)
     end
 
     # Flush the current database.
@@ -1651,7 +1647,7 @@ class Redis
         raise Redis::Error.new("Must call subscribe with a subscription block")
       end
 
-      void_command(concat(["SUBSCRIBE"], channels))
+      void_command(["SUBSCRIBE"] + channels)
     end
 
     # :ditto:
@@ -1687,19 +1683,20 @@ class Redis
         raise Redis::Error.new("Must call psubscribe with a subscription block")
       end
 
-      void_command(concat(["PSUBSCRIBE"], channel_patterns))
+      void_command(["PSUBSCRIBE"] + channel_patterns)
     end
 
     def psubscribe(*channel_patterns)
       psubscribe channel_patterns.to_a
     end
+
     private def already_in_subscription_loop?
       strategy.is_a? Redis::Strategy::SubscriptionLoop
     end
 
     # Unsubscribes the client from the given channels, or from all of them if none is given.
     def unsubscribe(channels : Array(String)) : Nil
-      void_command(concat(["UNSUBSCRIBE"], channels))
+      void_command(["UNSUBSCRIBE"] + channels)
     end
 
     # :ditto:
@@ -1709,7 +1706,7 @@ class Redis
 
     # Unsubscribes the client from the given patterns, or from all of them if none is given.
     def punsubscribe(channel_patterns : Array(String))
-      void_command(concat(["PUNSUBSCRIBE"], channel_patterns))
+      void_command(["PUNSUBSCRIBE"] + channel_patterns)
     end
 
     # :ditto:
@@ -1734,7 +1731,7 @@ class Redis
     #
     # **Return value**: "OK"
     def watch(keys : Array(String))
-      string_command(concat(["WATCH"], keys))
+      string_command(["WATCH"] + keys)
     end
 
     def watch(*keys)
@@ -1790,21 +1787,6 @@ class Redis
     # (not requested by read or write operations).
     def object_idletime(key)
       integer_or_nil_command(["OBJECT", "IDLETIME", key.to_s])
-    end
-
-    # Concatenates the source array to the destination array.
-    # Is there a better way?
-    private def concat(destination : Array(RedisValue), source)
-      source.each { |value| destination << value.to_s }
-      destination
-    end
-
-    # Concatenates the source arrays to the destination array.
-    # Is there a better way?
-    private def concat(destination : Array(RedisValue), source1, source2)
-      concat(destination, source1)
-      concat(destination, source2)
-      destination
     end
   end
 end
